@@ -1,0 +1,8 @@
+*.log
+*bak
+*bak2
+test*
+case/
+__pycache__/
+evaluation/
+node_modules/
