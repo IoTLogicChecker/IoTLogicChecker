@@ -1,0 +1,195 @@
+%use equality/integers.
+%use equality/strings.
+%%%%%%%% logic base %%%%%%%%%%%%%%%%%%%%%%%%%
+form : type.
+^ : form -> form -> form. %infix right 5 ^.
+and : form -> form -> form. %infix right 7 and.
+=> : form -> form -> form. %infix right 6 =>.
+=*> : form -> form -> form. %infix right 6 =*>.
+!=> : form -> form -> form. %infix right 6 !=>.
+=>! : form -> form -> form. %infix right 6 =>!.
+
+bool : type.
+true : bool.
+false : bool.
+%%%%%%%% iot base %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+data : type.
+str : string -> data.
+prin : type.
+attribute : type.
+says : prin -> form -> form. %infix right 14 says.
+action : prin -> form.
+controls : prin -> form -> form. %infix none 13 controls.
+'s : prin -> attribute -> prin. %infix left 16 's.
+%%, can use sequencely  e.g. A , B , C
+, : prin -> string -> prin . %infix left 12 ,. 
+transfer : prin -> prin -> form. %infix none 11 transfer.
+
+until : form -> integer -> form. %infix none 8 until.
+time : integer -> data.
+at : form -> data -> form. %infix none 8 at.
+bind : prin -> prin -> string -> form.
+%%%%% state interrupt %%%%%
+reset:form -> form. %%higher order operation reset(F) , turn off F in state manager .
+remove:form -> form. %%higher order operation reset(F) , turn off F in state manager .
+notexist : form -> form. %% higher order predicate: notexist(F) => C call state manager to find F, is F has,devive to conclusion C.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% precedence <<<<  ^ => and until ! at transfer , controls says 's <<<<
+
+%%%%%%%% searching derivation %%%%%%%%%%%%%%%%%%%
+%%In this app, we do not need to inter to action X, just X controls Y is OK.
+%%use a bool to handle and rule, use a integer to count derive level
+%%to make some derivation appear in top level to make sure some formula transfer to outer program
+derive : form -> form -> bool -> type.
+derive-arrow : derive (X says (F1 => F2) ^ F1)   F' B
+            <- derive (X says F2)                  F' true.
+%%derive-arrow' : derive (X says (F1 => F2) ^ X says F1)   F' B
+%%            <- derive (X says F2)                  F' true.
+derive-bangarrow: derive (X says ( F1 !=> F2) ^ F1)  F' B
+               <- derive (X says F2)                 F' true.
+derive-arrowbang': derive (X says ( F1 =>! F2) ^ F1)  F' B
+                <- derive (X says F2)                 F' true.
+%%derive-arrow-i : derive (X says ( F1 =*> F2))      F' B
+%%              <- derive (X says F1)                F' true.
+%%derive-arrow-i': derive (X says ( F1 =*> F2))      F' B
+%%                  <- derive (X says (F1 => F2))        F' true.
+
+derive-ctl-say : derive ((X says F) ^ (X controls F))  F' B
+              <- derive F                                F' true.
+derive-ctl-share: derive (X says (Y controls Z) ^ X controls Z) F' B
+               <- derive (Y controls Z)                           F' true.
+derive-ctl-share-p : derive (X says (Y controls (action (P 's Q))) ^ (X controls action P)) F' B
+                  <- derive (Y controls action (P 's Q))                                      F' true.
+derive-says-says: derive (X says (X says F)) F' B
+               <- derive (X says F) F' true.
+derive-say-transfer : derive (X says (X transfer Y)) F' B
+                   <- derive (X transfer Y)          F' true.
+%%每次使用F until' T时候，outerside program判断是否超时，超了turnOff,没有则去掉until进行derive
+%%即derive不存在until'的规则
+%%reset 暂时只作为结论被推出 然后触发state manager的清空F及其影响
+derive-reset : derive (X says (reset F))       F' B
+            <- derive (reset F)                F' true.
+%%remove 暂时只作为结论被推出 然后触发state manager的清空F
+derive-remove : derive (X says (remove F))       F' B
+             <- derive (remove F)                F' true.
+derive-omit-time1 : derive (F1 at T) F' B
+                     <- derive (F1)      F' true.
+%%pand在stop前最后处理
+derive-pand : derive (A ^ B)     F' true
+          <- derive (B ^ A)     F' false.
+derive-stop : derive F F B.
+
+deriveMultiple : form -> form -> type.
+deriveMultiple-and : deriveMultiple (X says (A and B)) F'
+                  <- deriveMultiple (X says A) F'.
+deriveMultiple-and' : deriveMultiple (X says (A and B)) F'
+                   <- deriveMultiple (X says B) F'.
+deriveMultiple-stop : deriveMultiple F F.
+
+%%%%%%%%  app-specific :RTE %%%%%%%%%%%%%%%
+device :  string -> prin.
+user : string -> prin.
+cloud : prin.
+%%special string, initaited by assumption manager
+RANDOMS : string. 
+%% resource or attribute
+button : attribute.
+api : string -> attribute.
+local : attribute.
+remote : attribute.
+network : attribute.
+
+deviceB = device "B".
+deviceD = device "D".
+userA = user "A".
+userC = user "C".
+
+%%%%%%%% equality property %%%%%%%%%%%%%%
+eq : form -> form -> type.
+eqi : eq X X.
+eqa : eq (X ^ Y) (Y ^ X).
+
+in : form -> form -> type. %infix none 4 in.
+in-1 : (X) in (X).
+in-2 : (X) in (X) -> (X) in ((X) ^ (Y)).
+in-step : (X) in (Y) -> (X) in (Z ^ (Y)).
+
+%%%%%%find all attribute%%%%%%%%%
+find-action : form -> prin -> type.
+find-action-1 :find-action (A says (action X)) X.
+find-action-step-and : find-action (F1 and F2) X
+                           <- find-action F1 X.
+find-action-step-and' : find-action (F1 and F2) X
+                           <- find-action F2 X.
+find-action-step-pand : find-action (F1 ^ F2) X
+                           <- find-action F1 X.
+find-action-step-pand' : find-action (F1 ^ F2) X
+                           <- find-action F2 X.
+find-action-step-say : find-action (A says (F)) X
+                           <- find-action F X.
+find-action-step-time : find-action (F at T) X
+                           <- find-action F X.
+find-action-step-until : find-action (F until T) X
+                           <- find-action F X.
+find-action-step-arrow1 : find-action (F1 => F2) X
+                             <- find-action F1 X.
+find-action-step-arrow2 : find-action (F1 => F2) X
+                             <- find-action F2 X.
+find-action-step-barrow : find-action (F1 !=> F2) X
+                              <- find-action F1 X.
+find-action-step-barrow : find-action (F1 !=> F2) X
+                              <- find-action F2 X.
+find-action-step-arrowb : find-action (F1 =>! F2) X
+                              <- find-action F1 X.
+find-action-step-arrowb : find-action (F1 =>! F2) X
+                           <- find-action F2 X.
+
+placeholder : type.
+foo : placeholder.
+find-transfer :form -> prin -> placeholder -> type. 
+find-transfer-1 :find-transfer ((user A) transfer TUP) TUP P.
+find-transfer-step-and : find-transfer (F1 and F2) X P
+                           <- find-transfer F1 X P.
+find-transfer-step-and' : find-transfer (F1 and F2) X P
+                           <- find-transfer F2 X P.
+find-transfer-step-pand : find-transfer (F1 ^ F2) X P
+                           <- find-transfer F1 X P.
+find-transfer-step-pand' : find-transfer (F1 ^ F2) X P
+                           <- find-transfer F2 X P.
+find-transfer-step-say : find-transfer (A says (F)) X P
+                           <- find-transfer F X P.
+find-transfer-step-time : find-transfer (F at T) X P
+                           <- find-transfer F X P.
+find-transfer-step-until : find-transfer (F until T) X P
+                           <- find-transfer F X P.
+find-transfer-step-arrow1 : find-transfer (F1 => F2) X P
+                             <- find-transfer F1 X P.
+find-transfer-step-arrow2 : find-transfer (F1 => F2) X P
+                             <- find-transfer F2 X P.
+find-transfer-step-barrow : find-transfer (F1 !=> F2) X P
+                              <- find-transfer F1 X P.
+find-transfer-step-barrow : find-transfer (F1 !=> F2) X P
+                              <- find-transfer F2 X P.
+find-transfer-step-arrowb : find-transfer (F1 =>! F2) X P
+                              <- find-transfer F1 X P.
+find-transfer-step-arrowb : find-transfer (F1 =>! F2) X P
+                           <- find-transfer F2 X P.
+
+%%find-transfer-level : prin -> integer -> integer -> type.
+%%find-transfer-level-start :find-transfer (F) START START.
+%%find-transfer-level-step : find-transfer (A , B) START N
+%%                       <-  find-transfer A START (N - 1).
+%%find-transfer-level-end :  find-transfer (F) START N.
+
+%%%%%%%% security property %%%%%%%%%%%%%%
+%%no need to restrict X and Y bound to different terms
+%%cause outer program keep X and Y unique
+%%2ucts : form -> form -> type.
+%%2ucts-cc :  2ucts (user X controls action (device Z) ^ user Y controls action (device Z))
+%%                  (user X controls action (device Z) ^ user Y controls action (device Z)).
+%%2ucts-ccf : 2ucts (user X controls action (device Z) ^ (user Y controls action (device Z) and F)) P
+%%             <- 2ucts (user X controls action (device Z) ^ user Y controls action (device Z)) P.
+%%2ucts-cff : 2ucts (user X controls action (device Z) ^ (F ^ F')) P
+%%               <- 2ucts (user X controls action (device Z) ^ F') P.
+%%2ucts-step : 2ucts (F ^ F') P
+%%              <- 2ucts F' P.
