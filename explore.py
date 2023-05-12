@@ -111,6 +111,7 @@ for case in cases:
                     if noUserMoveAfter(case, w.level):
                         if checkViolations(nw):
                             print(red('[+] Found!'))
+                            checkNoSatisfy(nw)
                             ErrorWorlds.append(nw)
                             continue
                     ws.append(nw)
