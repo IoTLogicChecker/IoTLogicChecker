@@ -68,3 +68,17 @@ def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
         return wrapper
 
     return decorator
+
+class Sequence():
+    def __init__(s,prefix):
+        s.idx = 0
+        s.prefix = prefix
+    def __next__(s):
+        s.idx += 1
+        return '"'+s.prefix+str(s.idx)+'"'
+
+mk_tid = lambda i: f"p{i}"
+mk_tdecl = lambda tid,ln: f"{tid} = {ln}."
+
+prob_choice = lambda p,a,b: a if random.random()<p else b
+wrapParen = lambda l:[f"({i})"for i in l]

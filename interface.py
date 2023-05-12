@@ -38,6 +38,7 @@ class Twelf():
         #    print(s.twelf.pid,s.childs[0])
 
     def restart(s):
+        s.quit()
         s.twelf = Popen([TWELF_PATH],stdin = PIPE, stdout = PIPE)
         s.childs = [s.twelf.pid+1]
         sleep(0.2)
@@ -45,6 +46,10 @@ class Twelf():
         #if s.childs[0] != s.twelf.pid+1:
         #    print(red('Not equal pid+1 found!'))
         #    print(s.twelf.pid,s.childs[0])
+    
+    #def __del__(s):#DONT because of shallow copy
+    #    s.interrupt_top()
+    #    s.quit()
 
     def read(s):
         OK = '%% OK %%\n'
@@ -61,7 +66,10 @@ class Twelf():
         else:
             warn(m)
             return False
-    
+
+    def rawwrite(s,msg):
+        s.twelf.stdin.write((msg+'\n').encode('utf-8'))
+
     def write(s,msg):
         s.twelf.stdin.flush()
         s.twelf.stdin.write((msg+'\n').encode('utf-8'))
@@ -90,8 +98,8 @@ class Twelf():
         return s.read()
 
     def quit(s):
-        s.write('quit')
-        s.twelf.wait()
+        s.rawwrite('quit')
+        #s.twelf.wait()
 
     def kill(s):
         s.twelf.kill()
