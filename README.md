@@ -11,7 +11,8 @@ The IoT-Logic Checker, a tool enabling automatic logic reasoning to identify log
 ```
 python explore.py example_RTE_policy.txt
 ```
-    The result will be in *example\_RTE\_policy.txt.log*
+
+The result will be in *example\_RTE\_policy.txt.log*
 
 + To check one user action sequence in detail:
 ```
