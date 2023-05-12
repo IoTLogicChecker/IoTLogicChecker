@@ -64,17 +64,15 @@ derive-says-says: derive (X says (X says F)) F' B
                <- derive (X says F) F' true.
 derive-say-transfer : derive (X says (X transfer Y)) F' B
                    <- derive (X transfer Y)          F' true.
-%%每次使用F until' T时候，outerside program判断是否超时，超了turnOff,没有则去掉until进行derive
-%%即derive不存在until'的规则
-%%reset 暂时只作为结论被推出 然后触发state manager的清空F及其影响
+
 derive-reset : derive (X says (reset F))       F' B
             <- derive (reset F)                F' true.
-%%remove 暂时只作为结论被推出 然后触发state manager的清空F
+%%remove as conclusion, then trigger state manager remove
 derive-remove : derive (X says (remove F))       F' B
              <- derive (remove F)                F' true.
 derive-omit-time1 : derive (F1 at T) F' B
                      <- derive (F1)      F' true.
-%%pand在stop前最后处理
+%%pand handle last before stop
 derive-pand : derive (A ^ B)     F' true
           <- derive (B ^ A)     F' false.
 derive-stop : derive F F B.
