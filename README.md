@@ -1,5 +1,5 @@
 # IoTLogicChecker
-The IoT-Logic Checker, a tool enabling automatic logic reasoning to identify logic weaknesses.
+The IoT-Logic Checker, a tool enabling automatic logic reasoning to identify logic weaknesses in RTE policy.
 
 ## Requirement
 + \*nix (tested under Linux, other platform may have bugs)
