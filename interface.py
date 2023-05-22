@@ -31,7 +31,7 @@ class Twelf():
     def __init__(s):
         s.twelf = Popen([TWELF_PATH],stdin = PIPE, stdout = PIPE)
         s.childs = [s.twelf.pid+1]
-        sleep(0.2)
+        sleep(0.1)
         #s.childs = getChildProcess(s.twelf.pid)
         #if s.childs[0] != s.twelf.pid+1:
         #    print(red('Not equal pid+1 found!'))
@@ -41,7 +41,7 @@ class Twelf():
         s.quit()
         s.twelf = Popen([TWELF_PATH],stdin = PIPE, stdout = PIPE)
         s.childs = [s.twelf.pid+1]
-        sleep(0.2)
+        sleep(0.1)
         #s.childs = getChildProcess(s.twelf.pid)
         #if s.childs[0] != s.twelf.pid+1:
         #    print(red('Not equal pid+1 found!'))
@@ -123,6 +123,8 @@ class Twelf():
             print(red(f'[E] twelf declaration abort when handle {decl}'))
             s.quit()
             #FS.show()
+            print('into interact mode to debug')
+            s.interact()
             exit(2)
 
     def interrupt(s,pid):
@@ -132,7 +134,9 @@ class Twelf():
             print(e)
             print('twelf pid:',s.twelf.pid)
             print('interrupt pid:',pid)
-            print(os.system())
+            ps = getChildProcess(s.twelf.pid)
+            print('ps:',ps)
+            print(os.system(f'kill -2 {ps[0]}'))
         return s.read()#find ok
 
     def interrupt_top(s):

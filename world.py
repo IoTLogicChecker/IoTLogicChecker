@@ -54,4 +54,3 @@ class World:
             sendNewDeclares(newworld)
             deriveFormPairs(newworld)
         return newworld
-

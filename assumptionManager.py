@@ -74,27 +74,28 @@ class Declaration:
     def checkOperation(s):
         ##if operation "X transfer Y" "X says action Y",
         ##turnOff when used
-        patterns = ["MX transfer MY",
-                    "MX transfer MY at MT"]
-        patterns = wrapParen(patterns)
-        p_transfer = len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).'))>0
-        #print('p_transfer',p_transfer)
+        return Declaration.checkFormOperation(s.twelf,s.form)
+        #patterns = ["MX transfer MY",
+        #            "MX transfer MY at MT"]
+        #patterns = wrapParen(patterns)
+        #p_transfer = len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).'))>0
+        ##print('p_transfer',p_transfer)
 
-        #excpet => =>! !=>, all are operation
-        patterns = ["MX says (MF1 => MF2)",
-                    "MX says (MF1 !=> MF2)",
-                    "MX says (MF1 =>! MF2)"
-                    ]
-        patterns = wrapParen(patterns)
-        p_not_rules = len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).')) == 0
-        #print('p_not_rules',p_not_rules)
-        
-        patterns = ["MX says MF",
-                    "MX says MF at MT"]
-        patterns = wrapParen(patterns)
-        p_says =  len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).')) > 0
-        #print('p_says',p_says)
-        return (p_says and p_not_rules) or p_transfer
+        ##excpet => =>! !=>, all are operation
+        #patterns = ["MX says (MF1 => MF2)",
+        #            "MX says (MF1 !=> MF2)",
+        #            "MX says (MF1 =>! MF2)"
+        #            ]
+        #patterns = wrapParen(patterns)
+        #p_not_rules = len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).')) == 0
+        ##print('p_not_rules',p_not_rules)
+        #
+        #patterns = ["MX says MF",
+        #            "MX says MF at MT"]
+        #patterns = wrapParen(patterns)
+        #p_says =  len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).')) > 0
+        ##print('p_says',p_says)
+        #return (p_says and p_not_rules) or p_transfer
     def checkTransfer(s)->'prin,s or None':
         patterns = ["X transfer (Y , ANS)"]
         patterns = wrapParen(patterns)
@@ -113,10 +114,30 @@ class Declaration:
         return len(twelf.query(f'eq ({form}) (MX says (MF1 and MF2)).'))>0
     @staticmethod
     def checkFormOperation(twelf,form):
-        dec = Declaration(twelf,'tmp',form)
-        twelf.decl(str(dec))
-        return dec.checkOperation()
+        #dec = Declaration(twelf,'tmp',form)
+        #twelf.decl(str(dec))
+        #return dec.checkOperation()
+        patterns = ["MX transfer MY",
+                    "MX transfer MY at MT"]
+        patterns = wrapParen(patterns)
+        p_transfer = len(twelf.query(f'({form}) in ({" ^ ".join(patterns)}).'))>0
+        #print('p_transfer',p_transfer)
 
+        #excpet => =>! !=>, all are operation
+        patterns = ["MX says (MF1 => MF2)",
+                    "MX says (MF1 !=> MF2)",
+                    "MX says (MF1 =>! MF2)"
+                    ]
+        patterns = wrapParen(patterns)
+        p_not_rules = len(twelf.query(f'({form}) in ({" ^ ".join(patterns)}).')) == 0
+        #print('p_not_rules',p_not_rules)
+        
+        patterns = ["MX says MF",
+                    "MX says MF at MT"]
+        patterns = wrapParen(patterns)
+        p_says =  len(twelf.query(f'({form}) in ({" ^ ".join(patterns)}).')) > 0
+        #print('p_says',p_says)
+        return (p_says and p_not_rules) or p_transfer
 
 
 class FormSpace:
@@ -164,6 +185,9 @@ class FormSpace:
         return [str(decl) for decl in s.D.values() if decl.available()]
     def avail_decls(s):
         return [decl for decl in s.D.values() if decl.available()]
+    def eternalRules(s):
+        return [decl for decl in s.D.values() if decl.eternal]
+
     def containsAlive(s,form):
         for decl in s.D.values():
             if decl.available():
@@ -230,7 +254,7 @@ class FormSpace:
         if f := s.D[tid].checkRemove():
             #remove
             s.turnOff(s.D[tid])
-            for decl in s.D.values():
+            for decl in s.avail_decls():
                 if decl.match(f):
                     #print(red(f'REMOVE {decl.tid}'))
                     s.turnOff(decl)
@@ -241,7 +265,7 @@ class FormSpace:
             #reset
             s.turnOff(s.D[tid])
             #print(red('RESET'))
-            for decl in s.D.values():
+            for decl in s.avail_decls():
                 if decl.match(f):
                     s.turnOff(decl)
                     s.revertInfluence(decl)

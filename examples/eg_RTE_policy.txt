@@ -1,0 +1,24 @@
+cloud controls (bind (user X) (device B) S).
+device B says (user X says action (device B 's button) =>
+	device B transfer (user X , "secretOfDevice"++ B)).
+device B says (bind (user X) (device B) S =>!
+	user X controls action (device B)).
+cloud says (user X transfer (cloud , "secretOfDevice"++ B) =>
+	bind (user X) (device B) ("secretOfDevice"++ B)).
+----------------------------------------------------------------
+userA says action (deviceB 's button)
+userA transfer (cloud , "secretOfDeviceB")
+================================================================
+Below "===" are comments,
+The first block above "-----" is the RTE binding policy, and
+the second block below "-----" is the user action template
+
+normal user op seq:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (cloud , "secretOfDeviceB") at (time 15)
+
+attack1:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (cloud , "secretOfDeviceB") at (time 15)
+userC says action (deviceB 's button) at (time 20)
+userC transfer (cloud , "secretOfDeviceB") at (time 25)

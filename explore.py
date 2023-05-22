@@ -1,11 +1,13 @@
 #!/bin/python3
 import sys
+import re
 from time import sleep
 from world import World
 from userActionEnumerator import UserActionEnumerator
 from logicDeductor import readPolicy,initLogic,checkViolations,checkNoSatisfy,summary,sendAvailableLemmaDeclares,sendAvailableDeclares
 from interface import Twelf
 from helper import *
+from threading import Thread
 policy_path = 'case/iRobot.txt'
 ToErrorFilePath = lambda fp:fp.split('/')[-1]+'.log'
 twelf = Twelf()
@@ -21,23 +23,21 @@ def load(w,policy_path,AE):
     AE.simulate()
     return policy
 
-def reload(policy,w0):
+def reload(policy,w):
     twelf.reset()
-    sleep(0.1)
     twelf.load()
-    sleep(0.1)
+    sleep(0.05)
     policy.loadUserDefineTypes(twelf)
-    sendAvailableDeclares(w0)
+    sendAvailableDeclares(w)
 
 def restart(policy,w0):
     twelf.quit()
     twelf.restart()
     twelf.read()
-    sleep(0.1)
+    sleep(0.05)
     twelf.config()
-    sleep(0.1)
     twelf.load()
-    sleep(0.1)
+    sleep(0.05)
     #twelf.interact()
     policy.loadUserDefineTypes(twelf)
     sendAvailableDeclares(w0)
@@ -66,13 +66,22 @@ AE = UserActionEnumerator(w0,twelf)
 #World.step : deepcopy then step to new world
 policy = load(w0 , policy_path, AE)
 cnt = 0
-def debugcondition2(case,trace):
-    pos = []
-    for i,c in enumerate(case):
-        if c == 'attacker':
-            pos.append(i)
-    return 'button' in trace[pos[0]] and 'api "reset"' in trace[pos[1]] and 'transfer (cloud' in trace[pos[2]]
-    
+def filter_operation(w,op,AE):
+    ifpass = False
+    if not empty(w.DS.traceOpSeq):
+        lastop = w.DS.traceOpSeq[-1]
+        prin = lastop.split(' ')[0].strip()
+        if prin == 'userC' and AE.stripTime(op) == AE.stripTime(lastop):
+            #jump the attacker repeated operation
+            ifpass = True
+        if 'api' in lastop:
+            ifpass = True
+            apiname = re.findall(r'api\s+"(\w+)"',lastop)[0]
+            #API
+            if op.startswith(prin) and 'transfer' in op and op.count(',') in AE.apiargs[apiname]:
+                #argument num match
+                ifpass = False
+    return ifpass
 AE.show()
 print('----------start----------')
 cases = AE.whoMoveCombinations()
@@ -92,20 +101,24 @@ for case in cases:
         w = ws.pop()
         AE.setWorld(w)
         if w.level < level_last:
-            sendAvailableLemmaDeclares(w)#if level decrese, need to redeclare
+            reload(policy,w)
+            #sendAvailableLemmaDeclares(w)#if level decrese, need to redeclare
         level_last = w.level
         if w.level < level_stop:
             choice = case[w.level]
             if choice == 'user':
                 op = AE.getUserOperations(case,w.level)
+                if filter_operation(w,op,AE):
+                    continue
                 nw = w.step(op)
                 ws.append(nw)
             else:#attacker
                 ops = AE.generateAllOperations()
                 for op in ops:
-                    if not empty(w.DS.traceOpSeq) and AE.stripTime(op) == AE.stripTime(w.DS.traceOpSeq[-1]):
-                        #jump the repeated operation
+                    #filter:speed up
+                    if filter_operation(w,op,AE):
                         continue
+                    
                     nw = w.step(op)
                     
                     if noUserMoveAfter(case, w.level):
@@ -127,7 +140,7 @@ for case in cases:
                 print(red('[+] Found!'))
                 errorp = True
             if errorp:
-                summary(w,AE)
+                #summary(w,AE)
                 ErrorWorlds.append(w)
     #reload(policy,w0)
     restart(policy,w0)

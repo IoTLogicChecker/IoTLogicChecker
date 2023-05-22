@@ -78,6 +78,7 @@ class UserActionEnumerator():
         s._loopcnt = 0
         s.world = world
         s.twelf = twelf
+        s.apiargs = {}
         if 'ATTACK_MOVE_NUM' in dir(config):
             s.attackMoveNum = config.ATTACK_MOVE_NUM
         else:
@@ -100,6 +101,26 @@ class UserActionEnumerator():
             ans[p].add(len(pss) - 1)
         s.transfers = ans
 
+    def findApiArgNum(s):
+        d = {}
+        for form in s.world.FS.eternalRules():
+            premises = str(form).split('=>')
+            apiname = None
+            user = None
+            for i,premise in enumerate(premises):
+                if not apiname:
+                    if 'api' in premise:
+                        if tup:=re.findall(r'user\s+([A-Z]+)\s+[\s\w\d\(\)\']*api\s+"(\w+)"',premise)[0]:
+                            if len(tup)>1:
+                                user,apiname = tup
+                else:
+                    if 'transfer' in premise and user in premise.split('transfer')[0]:
+                        if apiname not in d:
+                            d[apiname] = set()
+                        d[apiname].add(premise.count(','))
+        s.apiargs = d
+        return d
+
     def simulate(s):
         i = 0
         l = []
@@ -114,6 +135,7 @@ class UserActionEnumerator():
         l += s.world.FS.avail_tids()
         s.simulateAction(l)
         s.simulateTransfer(l)
+        s.findApiArgNum()
 
     def generateAllOperations(s):
         ops = []
@@ -186,9 +208,9 @@ class UserActionEnumerator():
         return None
     def feedAsPolicy(s):
         if len(s.UserOpSeq)>0:
-                op = s.UserOpSeq.pop()
-                s.checkTimes(op)
-                return op
+            op = s.UserOpSeq.pop()
+            s.checkTimes(op)
+            return op
         else:
             return None
     def gen(s)->'ln or None':
@@ -292,7 +314,6 @@ class UserActionEnumerator():
         s.cnt += 1
         return s
 
-
     def getUserOperations(s,case,level):
         level = level % len(case)
         n = 0
@@ -307,6 +328,7 @@ class UserActionEnumerator():
         if s.attackMoveNum:
             N = len(s.UserOpSeq)+s.attackMoveNum
         else:
+            #N = len(s.UserOpSeq)*2+1#default
             N = len(s.UserOpSeq)*2#default
         cases = []
         for combine in combinations(range(N),len(s.UserOpSeq)):
@@ -322,6 +344,8 @@ class UserActionEnumerator():
         print(s.actions)
         print('------simulate transfers---------')
         print(s.transfers)
+        print('------api args---------')
+        print(s.apiargs)
         print('------left UserOpSeq--------')
         for uop in s.UserOpSeq:
             print(uop)

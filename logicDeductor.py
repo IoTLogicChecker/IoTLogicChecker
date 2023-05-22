@@ -16,6 +16,7 @@ def declThenDerive(w,tid,cmd,form):
     w.twelf.decl(f'{tid} = {form}.')
     return w.twelf.query(cmd,cb)
 
+
 def derive(w,forms:"p1 ^ p2"):
     #derive to one solution with twelf derive
     def cb(form):
@@ -28,6 +29,13 @@ def derive(w,forms:"p1 ^ p2"):
                 #equality check with twelf
                 ans.append(form)
         return ans
+    def easy_cb(form):
+        ans = []
+        #check if in FS
+        form = form.split(';')[0]
+        if not w.FS.containsAlive(form):#equality check with twelf
+            ans.append(form)
+        return ans
     if form1 := list1orEmptyList(w.twelf.query(f'derive ({forms}) ANS true .',cb)):
         #print('1',form1)
         forms2 = deriveMultiple(w,form1)#if split and success
@@ -35,7 +43,8 @@ def derive(w,forms:"p1 ^ p2"):
         if len(forms2) > 0 :
             for form2 in forms2:
                 #print('2',form2)
-                if form3 := list1orEmptyList(declThenDerive(w,'tmp',f'derive tmp ANS true .',form2)):
+                #if form3 := list1orEmptyList(declThenDerive(w,'tmp',f'derive tmp ANS true .',form2)):
+                if form3 := list1orEmptyList(w.twelf.query(f'derive ({form2}) ANS true .',easy_cb)):
                     #print('3',form3)
                     ans.append(form3)
                 ans.append(form2)
@@ -47,7 +56,15 @@ def derive(w,forms:"p1 ^ p2"):
 def deriveMultiple(w,form1):
     #derive to multiple solution with twelf deriveMultiple
     #split and
+    def easy_cb(form):
+        ans = []
+        #check if in FS
+        form = form.split(';')[0]
+        if not w.FS.containsAlive(form):#equality check with twelf
+            ans.append(form)
+        return ans
     forms = declThenDerive(w,'tmp',f'deriveMultiple tmp ANS .',form1)
+    #forms = w.twelf.query(f'deriveMultiple ({form1}) ANS .', easy_cb)
     ans = []
     for form in forms:
         if re.findall('\sand\s',form):#possible to have and
@@ -154,6 +171,7 @@ def deriveFormPairs(w):
                     tid_use_lst.append(f'{tid}int')
             else:
                 w.FS.turnOff(w.FS.D[tid])
+                print(w.FS.D[tid].form)
                 print(f'{tid} expired, continue')
                 continue
 

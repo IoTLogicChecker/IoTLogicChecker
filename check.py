@@ -18,7 +18,7 @@ def run(twelf, mode=3):
 
     initLogic(twelf)
     w0 = World(twelf)
-    AE = UserActionEnumerator(w0,twelf)
+    AE = UserActionEnumerator(w0,twelf,mode)
     policy = readPolicy(policy_path)
     policy.load(twelf,w0,AE)
     w0.init()
@@ -29,16 +29,19 @@ def run(twelf, mode=3):
             if op := AE.gen():
                 print(op)
                 w = w.step(op)
+                AE.setWorld(w)
             else:
                 break
-            if checkViolations(w):
-                break
+            if mode == 2:
+                if checkViolations(w):
+                    break
             if STEP:
                 #step debug
                 FS.show()
                 input('Next round?')
     except KeyboardInterrupt:
         print(yellow('stop'))
+    checkViolations(w)
     checkNoSatisfy(w)
     summary(w,AE,True)
 
