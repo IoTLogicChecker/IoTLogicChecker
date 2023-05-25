@@ -118,9 +118,9 @@ def timeMetaRule1(w,form,parents):
         F = F.lstrip('F =').strip()
         X = X.lstrip('X =').strip()
         #print(T,F,X,'when check:',form)
-        for newform in derive(f'{X} says ({F})'):
+        for newform in derive(w,f'{X} says ({F})'):
             newtid = w.FS.add(newform+ f' at (time {T})',parents)
-            tdecl(w.FS.useDecl(newtid))
+            w.twelf.decl(w.FS.useDecl(newtid))
             ifRemoveImmediatelyUse(w,newtid)
             ifResetImmediatelyUse(w,newtid)
             timeMetaRule1(w,newform,[newtid])

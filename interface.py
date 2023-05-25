@@ -24,32 +24,21 @@ def getChildProcess(pid):
     ps_output = run(['ps', '-opid', '--no-headers', '--ppid', str(pid)],
                 stdout=PIPE, encoding='utf8')
     child_process_ids = [int(line) for line in ps_output.stdout.splitlines()]
-    print(child_process_ids)
     return child_process_ids
 
 class Twelf():
     def __init__(s):
         s.twelf = Popen([TWELF_PATH],stdin = PIPE, stdout = PIPE)
-        s.childs = [s.twelf.pid+1]
+        #s.childs = [s.twelf.pid+1]
         sleep(0.1)
-        #s.childs = getChildProcess(s.twelf.pid)
-        #if s.childs[0] != s.twelf.pid+1:
-        #    print(red('Not equal pid+1 found!'))
-        #    print(s.twelf.pid,s.childs[0])
+        s.childs = getChildProcess(s.twelf.pid)
 
     def restart(s):
         s.quit()
         s.twelf = Popen([TWELF_PATH],stdin = PIPE, stdout = PIPE)
-        s.childs = [s.twelf.pid+1]
+        #s.childs = [s.twelf.pid+1]
         sleep(0.1)
-        #s.childs = getChildProcess(s.twelf.pid)
-        #if s.childs[0] != s.twelf.pid+1:
-        #    print(red('Not equal pid+1 found!'))
-        #    print(s.twelf.pid,s.childs[0])
-    
-    #def __del__(s):#DONT because of shallow copy
-    #    s.interrupt_top()
-    #    s.quit()
+        s.childs = getChildProcess(s.twelf.pid)
 
     def read(s):
         OK = '%% OK %%\n'
@@ -132,11 +121,7 @@ class Twelf():
             os.kill(pid,signal.SIGINT)
         except PermissionError as e:
             print(e)
-            print('twelf pid:',s.twelf.pid)
-            print('interrupt pid:',pid)
-            ps = getChildProcess(s.twelf.pid)
-            print('ps:',ps)
-            print(os.system(f'kill -2 {ps[0]}'))
+            print(os.system(f'kill -2 {pid}'))
         return s.read()#find ok
 
     def interrupt_top(s):

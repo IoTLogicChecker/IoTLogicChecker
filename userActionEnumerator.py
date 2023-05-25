@@ -150,12 +150,19 @@ class UserActionEnumerator():
         def filterSecret(f):
             if f.startswith('user'):#user "C"
                 if 'transfer' in f:
-                    prinWithData = f.split('transfer')[1]
-                    for connect in re.findall(r'"(\w*)"\s*\+\+\s*"(\w*)"',prinWithData):
-                        lhs,rhs = connect
-                        data = lhs+rhs
-                        if 'userC' not in s.world.DS.database or data not in s.world.DS.database['userC']:
-                            return False
+                    datas = f.split('transfer')[1].split(',')[1:]
+                    for d in datas:
+                        if '++' in d:
+                            for connect in re.findall(r'"(\w+)"\s*\+\+\s*"(\w+)"',d):
+                                lhs,rhs = connect
+                                data = lhs+rhs
+                                if 'userC' not in s.world.DS.database or data not in s.world.DS.database['userC']:
+                                    return False
+                        else:
+                            for data in re.findall(r'"(\w+)"',d):
+                                if data not in ['randomStrByUserC','B','A','C']:
+                                    if 'userC' not in s.world.DS.database or data not in s.world.DS.database['userC']:
+                                        return False
             return True
 
         def helper(rst,tup):
@@ -388,8 +395,8 @@ class UserActionEnumerator():
         if s.attackMoveNum:
             N = len(s.UserOpSeq)+s.attackMoveNum
         else:
-            #N = len(s.UserOpSeq)*2+1#default
-            N = len(s.UserOpSeq)*2#default
+            N = len(s.UserOpSeq)*2+1#default
+            #N = len(s.UserOpSeq)*2#default
         cases = []
         for combine in combinations(range(N),len(s.UserOpSeq)):
             case = ['attacker']*N
