@@ -78,7 +78,7 @@ class UserActionEnumerator():
         s._loopcnt = 0
         s.world = world
         s.twelf = twelf
-        s.apiargs = {}
+        #s.apiargs = {}
         if 'ATTACK_MOVE_NUM' in dir(config):
             s.attackMoveNum = config.ATTACK_MOVE_NUM
         else:
@@ -107,7 +107,7 @@ class UserActionEnumerator():
             premises = str(form).split('=>')
             apiname = None
             user = None
-            for i,premise in enumerate(premises):
+            for premise in premises:
                 if not apiname:
                     if 'api' in premise:
                         if tup:=re.findall(r'user\s+([A-Z]+)\s+[\s\w\d\(\)\']*api\s+"(\w+)"',premise)[0]:
@@ -116,8 +116,14 @@ class UserActionEnumerator():
                 else:
                     if 'transfer' in premise and user in premise.split('transfer')[0]:
                         if apiname not in d:
-                            d[apiname] = set()
-                        d[apiname].add(premise.count(','))
+                            d[apiname] = []
+                        for data in re.findall(r',\s*(\w+)', premise):
+                            for type_ in re.findall(r'(\w+)\s*'+data, form):
+                                if type_ == 'device':
+                                    d[apiname].append('device')
+                                else:
+                                    d[apiname].append('str')
+                        #d[apiname].add(premise.count(','))
         s.apiargs = d
         return d
 
@@ -135,14 +141,59 @@ class UserActionEnumerator():
         l += s.world.FS.avail_tids()
         s.simulateAction(l)
         s.simulateTransfer(l)
-        s.findApiArgNum()
+        #s.findApiArgNum()
+
+    def genAttackerOps(s):
+        ops = []
+        findVar = lambda f: dis_duplicate(re.findall(r'\b[A-Z]\w*',removeStr(f)))
+        findType = lambda d,f: list1orEmptyList(re.findall(r'(\w+)\s*'+d, removeStr(f))) or 'data'
+        def filterSecret(f):
+            if f.startswith('user'):#user "C"
+                if 'transfer' in f:
+                    prinWithData = f.split('transfer')[1]
+                    for connect in re.findall(r'"(\w*)"\s*\+\+\s*"(\w*)"',prinWithData):
+                        lhs,rhs = connect
+                        data = lhs+rhs
+                        if 'userC' not in s.world.DS.database or data not in s.world.DS.database['userC']:
+                            return False
+            return True
+
+        def helper(rst,tup):
+            var,vlst = tup
+            return [re.sub(r'\b'+var+r'\b',v,poss) for v in vlst for poss in rst]
+
+        for decl in s.world.FS.avail_decls():
+            #TODO:change to use syntax parser instead of ad-hoc regexp
+            form = decl.form
+            if '(' in form and '=>' in form:
+                fst_premise = getMiddle(form,'(','=>').rstrip('!').strip()
+                if re.findall(r'\buntil\b',fst_premise):
+                    fst_premise = fst_premise.split('until')[0].strip()
+                if re.findall(r'\bat\b',fst_premise):
+                    fst_premise = fst_premise.split('at')[0].strip()
+                if fst_premise.startswith('user'):
+                    replaces = []#[('X',['"C"']),('S',['"password"','"password2"'])]
+                    for var in findVar(fst_premise):
+                        t = findType(var,form)
+                        if t == 'user':
+                            replaces.append((var, ['"C"']))#gen attacker:user "C"
+                        elif t == 'device':
+                            replaces.append((var, ['"B"']))#gen normal device:device "B"
+                        else:#data
+                            if 'userC' in s.world.DS.database:
+                                replaces.append((var, [str_(data) for data in s.world.DS.database['userC']]))
+                            else:
+                                replaces.append((var, ['"randomStrByUserC"']))
+                    ops += filter(filterSecret,reduce(helper,replaces,[fst_premise]))
+        return ops
+
 
     def generateAllOperations(s):
         ops = []
         ops += [s.wrapTime(op) for op in s.genAttackerOps()]
         return ops
    
-    def genAttackerOps(s):
+    def genAttackerOpsBackup(s):
         #ops = dis_duplicate(s.genTransfer()) + dis_duplicate(s.genSays())
         ops = s.genTransfer() + s.genSays()
         return ops
@@ -151,12 +202,22 @@ class UserActionEnumerator():
         ops = []
         f = lambda x : lambda y : lambda d:f"{x} transfer ({y} , {d})"
         f2 = lambda x : lambda y : lambda d:f"{x} transfer ({y} , {d} , \"B\")"
-        for p,v in s.transfers.items():
-            if p != 'userC' or p != 'user "C"':#FUTURE TODO
-                if 1 in v:
-                    ops += s.genAllDatas('userC',s.listcallwith(p,s.genAttackerPrin([f])))
-                if 2 in v:
-                    ops += s.genAllDatas('userC',s.listcallwith(p,s.genAttackerPrin([f2])))
+        if s.inSendingApiArgs:
+            for type_ in s.apiargs[s.inSendingApiArgs]:
+                if type_ == 'device':
+                    ops += s.listcallwith('cloud', s.genAttackerPrin([f]))
+                    #TODO
+                elif type_ == 'str':
+                    ops += s.listcallwith('cloud', s.genAttackerPrin([f]))
+                    pass
+
+        else:
+            for p,v in s.transfers.items():
+                if p != 'userC' or p != 'user "C"':#FUTURE TODO
+                    if 1 in v:
+                        ops += s.genAllDatas('userC',s.listcallwith(p,s.genAttackerPrin([f])))
+                    if 2 in v:
+                        ops += s.genAllDatas('userC',s.listcallwith(p,s.genAttackerPrin([f2])))
 
         return ops
 
@@ -171,11 +232,10 @@ class UserActionEnumerator():
         return [f(action) for f in fs for action in s.actions]
 
     def genAllDatas(s,p,fs):
-        str_ = lambda s:f'"{s}"'
         if p in s.world.DS.database:
             return [f(str_(data)) for f in fs for data in s.world.DS.database[p]]
         else:
-            return [f('"RandomStrBy%s"'% (p.replace('"',''))) for f in fs] #TODO
+            return [f('"randomStrBy%s"'% (p.replace('"',''))) for f in fs] #TODO
 
     def genAttackerPrin(s,fs):
         return s.listcallwith('userC',fs)
@@ -344,8 +404,8 @@ class UserActionEnumerator():
         print(s.actions)
         print('------simulate transfers---------')
         print(s.transfers)
-        print('------api args---------')
-        print(s.apiargs)
+        #print('------api args---------')
+        #print(s.apiargs)
         print('------left UserOpSeq--------')
         for uop in s.UserOpSeq:
             print(uop)

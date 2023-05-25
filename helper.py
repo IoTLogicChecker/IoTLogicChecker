@@ -25,6 +25,13 @@ def list1orEmptyList(l):
     else:
         return []
 
+def getMiddle(s,pre,suf):
+    pos1 = s.find(pre)+len(pre)
+    pos2 = s.find(suf,pos1)
+    if pos1-len(pre) == -1 or pos2 == -1:
+        return s
+    return s[pos1:pos2]
+
 def empty(l:list):
     return len(l) == 0
 
@@ -77,8 +84,28 @@ class Sequence():
         s.idx += 1
         return '"'+s.prefix+str(s.idx)+'"'
 
+def removeStr(f):
+    inQuote = False
+    escape = False
+    rst = ''
+    for ch in f:
+        if not inQuote:
+            if not escape and ch == '"':
+                inQuote = True
+            else:
+                rst += ch
+        else:
+            if not escape and ch == '"':
+                inQuote = False
+        if ch == '\\':
+            escape = True
+        else:
+            escape = False
+    return rst
+
 mk_tid = lambda i: f"p{i}"
 mk_tdecl = lambda tid,ln: f"{tid} = {ln}."
 
+str_ = lambda s:f'"{s}"'
 prob_choice = lambda p,a,b: a if random.random()<p else b
 wrapParen = lambda l:[f"({i})"for i in l]

@@ -7,7 +7,7 @@ from subprocess import Popen,PIPE,run
 from config import *
 
 CONFIG_PATH = './sources.cfg'
-@timeout(10)
+@timeout(5)
 def readUntil(ch,keywords:'list of str'):
     msg = b''
     while True:

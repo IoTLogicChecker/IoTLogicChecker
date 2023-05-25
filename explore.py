@@ -71,16 +71,11 @@ def filter_operation(w,op,AE):
     if not empty(w.DS.traceOpSeq):
         lastop = w.DS.traceOpSeq[-1]
         prin = lastop.split(' ')[0].strip()
-        if prin == 'userC' and AE.stripTime(op) == AE.stripTime(lastop):
+        if prin == 'user':
+            prin = prin+' '+lastop.split(' ')[1].strip()
+        if prin == 'user "C"' and AE.stripTime(op) == AE.stripTime(lastop):
             #jump the attacker repeated operation
             ifpass = True
-        if 'api' in lastop:
-            ifpass = True
-            apiname = re.findall(r'api\s+"(\w+)"',lastop)[0]
-            #API
-            if op.startswith(prin) and 'transfer' in op and op.count(',') in AE.apiargs[apiname]:
-                #argument num match
-                ifpass = False
     return ifpass
 AE.show()
 print('----------start----------')
@@ -108,8 +103,8 @@ for case in cases:
             choice = case[w.level]
             if choice == 'user':
                 op = AE.getUserOperations(case,w.level)
-                if filter_operation(w,op,AE):
-                    continue
+                #if filter_operation(w,op,AE):
+                #    continue
                 nw = w.step(op)
                 ws.append(nw)
             else:#attacker
