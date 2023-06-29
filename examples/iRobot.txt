@@ -1,0 +1,49 @@
+$ flagOnCloudBindingKey : prin -> string -> form.
+$ flagOnDeviceBindingKey : prin -> string -> form.
+
+cloud controls (bind (user Y) (device X) S).
+cloud controls (flagOnCloudBindingKey (device B) S).
+deviceB controls (flagOnDeviceBindingKey deviceB S).
+cloud says (device X transfer (cloud , S) =>
+						remove (flagOnCloudBindingKey (device X) ANYS) and
+						flagOnCloudBindingKey (device X) S).
+
+cloud says (flagOnCloudBindingKey (device X) S =>!
+						user Y transfer(cloud , S) !=>
+            notexist (bind ANYU (device X) ANYS) => (bind (user Y) (device X) S)).
+
+cloud says (user Z says action (cloud 's (api "reset")) =>
+		flagOnCloudBindingKey (device X) S =>!
+    user Z transfer (cloud , S , X) !=>
+    remove (bind ANYU (device X) ANYS)).
+
+deviceB says (user X says action (deviceB 's button) at (time T) =>
+	user X transfer (deviceB , S) until (T + 30) !=>
+	remove (flagOnDeviceBindingKey deviceB S2) and
+	(deviceB transfer (cloud , S)) and
+	(flagOnDeviceBindingKey deviceB S)).
+
+deviceB says ((flagOnDeviceBindingKey deviceB S) =>!
+	user Z says action (deviceB 's button) =>
+	deviceB transfer (user Z , S)).
+-----------------------------------------------------
+userA says action (deviceB 's button)
+userA transfer (deviceB , "password")
+userA transfer (cloud , "password")
+======================================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 30)
+userA transfer (deviceB , "password") at (time 35)
+userA transfer (cloud , "password") at (time 40)
+
+attack 1:
+userC says action (deviceB 's button) at (time 45)
+userC transfer (deviceB , "password2") at (time 50)
+userC says action (cloud 's (api "reset")) at (time 55)
+userC transfer (cloud , "password2" , "B") at (time 60)
+
+attack 2:
+userC says action (deviceB 's button) at (time 45)
+userC says action (cloud 's (api "reset")) at (time 55)
+userC transfer (cloud , "password" , "B") at (time 60)

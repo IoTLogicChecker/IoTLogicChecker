@@ -1,0 +1,50 @@
+$ flagDeviceLocalKey : prin -> prin -> string -> form.
+$ flagCloudLocalKey : prin -> prin -> string -> form.
+
+device B controls (bind (user X) (device B) S).
+cloud controls (flagCloudLocalKey ANYU ANYD ANYS).
+device B controls (flagDeviceLocalKey ANYU (device B) ANYS).
+device B controls action (device B).
+
+device B says (user X says action (device B 's button) =>
+	remove (flagDeviceLocalKey ANYU (device B) ANYS) and
+	flagDeviceLocalKey (user X) (device B) RANDOMS).
+
+device B says (flagDeviceLocalKey (user X) (device B) S =>
+	device B transfer (user X , S)).
+
+device B says (flagDeviceLocalKey (user X) (device B) S =>!
+	cloud transfer (device B , S , Y) =>
+	bind (user Y) (device B) S).
+
+cloud says (user X says action (cloud 's (api "addDevice")) =>
+	user X transfer (cloud , S , B) !=>
+	remove (flagCloudLocalKey ANYU (device B) S) and
+	flagCloudLocalKey (user X) (device B) S and
+	cloud transfer (device B , S , X)).
+
+cloud says (flagCloudLocalKey (user X) (device B) S =>
+	user Y controls action (device B 's remote) =>
+	cloud transfer (user Y , S)).
+--------------------------
+userA says action (deviceB 's button) at (time 30)
+userA says action (cloud 's (api "addDevice")) at (time 35)
+userA transfer (cloud , "randomstr1" , "B") at (time 35)
+userA says (userC controls action (deviceB 's remote)) at (time 40)
+userA says (remove (userC controls action (deviceB 's remote))) at (time 50)
+===========================================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 30)
+userA says action (cloud 's (api "addDevice")) at (time 35)
+userA transfer (cloud , "randomstr1" , "B") at (time 35)
+userA says (userC controls action (deviceB 's remote)) at (time 40)
+userA says (remove (userC controls action (deviceB 's remote))) at (time 50)
+attack1:
+userA says action (deviceB 's button) at (time 30)
+userA says action (cloud 's (api "addDevice")) at (time 35)
+userA transfer (cloud , "randomstr1" , "B") at (time 35)
+userA says (userC controls action (deviceB 's remote)) at (time 40)
+userC says action (cloud 's (api "addDevice")) at (time 45)
+userC transfer (cloud , "randomstr1" , "B") at (time 45)
+userA says (remove (userC controls action (deviceB 's remote))) at (time 50)

@@ -1,0 +1,56 @@
+$ flagCloudDistributeKey : prin -> string -> integer -> form.
+$ flagOnCloudBindingKey : prin -> string -> integer -> form.
+
+cloud controls (bind (user Y) (device X) S).
+cloud controls (flagCloudDistributeKey (device X) S T).
+cloud controls (flagOnCloudBindingKey (device X) S T).
+
+device B says (user X says action (device B 's button) at (time T) => 
+	device B transfer (cloud , RANDOMS) at (time T)).
+
+cloud says (device X transfer (cloud , S) at (time T) =>
+	remove (flagCloudDistributeKey (device X) ANYS ANYT) and
+	flagCloudDistributeKey (device X) S T and
+	flagOnCloudBindingKey (device X) S T).
+
+cloud says (flagCloudDistributeKey (device X) S T =>!
+	user Y says action (cloud 's (api "getToken")) until (T + 60) !=>
+	user Y transfer (cloud , X) !=> 
+	cloud transfer (user Y , S)).
+
+cloud says (flagOnCloudBindingKey (device X) S T =>!
+	user Y transfer (cloud , S) until (T + 1200) =>
+	remove (flagOnCloudBindingKey (device X) S T) and
+	bind (user Y) (device X) S).
+
+--------------------------------------------------------
+userA says action (deviceB 's button)
+userA says action (cloud 's (api "getToken"))
+userA transfer (cloud , "B")
+userA transfer (cloud , "randomstr1")
+===========================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 10)
+userA says action (cloud 's (api "getToken")) at (time 50)
+userA transfer (cloud , "B") at (time 50)
+userA transfer (cloud , "randomstr1") at (time 100)
+
+attack1:
+userA says action (deviceB 's button) at (time 10)
+userC says action (cloud 's (api "getToken")) at (time 15)
+userC transfer (cloud , "B") at (time 15)
+userA says action (cloud 's (api "getToken")) at (time 50)
+userA transfer (cloud , "B") at (time 50)
+userA says action (deviceB 's button) at (time 55)
+userA says action (cloud 's (api "getToken")) at (time 60)
+userA transfer (cloud , "B") at (time 60)
+userA transfer (cloud , "randomstr2") at (time 65)
+userC transfer (cloud , "randomstr1") at (time 70)
+
+testcase1:
+userA says action (deviceB 's button) at (time 10)
+userC says action (cloud 's (api "getToken")) at (time 20)
+userA says action (cloud 's (api "getToken")) at (time 50)
+userA transfer (cloud , "B") at (time 50)
+userA transfer (cloud , "randomstr1") at (time 100)

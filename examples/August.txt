@@ -1,0 +1,19 @@
+cloud controls (bind (user X) (device B) S).
+cloud says (user X transfer (cloud , "secretOfDevice"++ B) =>
+	notexist (bind ANYU (device B) ANYS) =>
+	bind (user X) (device B) ("secretOfDevice"++ B)).
+device B says (user X says action (device B 's button) =>
+	device B transfer (user X , "secretOfDevice"++ B)).
+----------------------------------------------------------------
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "secretOfDeviceB") at (time 35)
+================================================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "secretOfDeviceB") at (time 35)
+attack1:
+userC says action (deviceB 's button) at (time 20)
+userC transfer (cloud , "secretOfDeviceB") at (time 25)
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "secretOfDeviceB") at (time 35)

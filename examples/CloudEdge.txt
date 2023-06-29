@@ -1,0 +1,37 @@
+cloud controls (bind (user Y) (device X) S).
+device X says (user Y says action (device X 's button) =>
+	user Y transfer (device X , S) !=>
+	device X transfer (cloud , S)).
+
+cloud says (device X transfer(cloud , ("phoneMacOf"++ Y)) =>
+	remove (bind ANYU (device X) ANYS) and
+	bind (user Y) (device X) ("phoneMacOf"++ Y)).
+---------------------------------------
+cloud transfer(userC , ("phoneMacOfA")) at (time 0)
+cloud transfer(userC , ("phoneMacOfC")) at (time 5)
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "phoneMacOfA") at (time 15)
+=================================
+COMMENT
+cloud op seq:
+cloud transfer(userC , ("phoneMacOfA")) at (time 0)
+cloud transfer(userC , ("phoneMacOfC")) at (time 5)
+
+normal user op seq:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "phoneMacOfA") at (time 20)
+
+attack1:(malicious device)
+cloud transfer(userC , ("phoneMacOfA")) at (time 0)
+cloud transfer(userC , ("phoneMacOfC")) at (time 5)
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "phoneMacOfA") at (time 20)
+userC says action (deviceD 's button) at (time 25)
+userC transfer (deviceD , "phoneMacOfA") at (time 30)
+
+attack1:(malicious app)
+cloud transfer(userC , ("phoneMacOfA")) at (time 0)
+cloud transfer(userC , ("phoneMacOfC")) at (time 5)
+userA says action (deviceB 's button) at (time 10)
+userC transfer (deviceB , "phoneMacOfC") at (time 15)
+userA transfer (deviceB , "phoneMacOfA") at (time 20)

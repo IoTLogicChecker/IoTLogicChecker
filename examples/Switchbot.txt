@@ -1,0 +1,37 @@
+cloud controls (bind (user X) (device B) S).
+device B controls action (device B).
+device B says (user X says action (device B 's button) =>
+	device B transfer (user X , "secretOfDevice"++ B)).
+device B says (bind (user X) (device B) S =>!
+	user X controls action (device B)).
+cloud says (user X transfer (cloud , "secretOfDevice"++ B) =>
+	bind (user X) (device B) ("secretOfDevice"++ B)).
+
+cloud says (bind (user X) (device B) S =>!
+	user X controls action (device B 's remote)). 
+
+cloud says (user X controls action ((device B) 's remote) =>!
+	user X says action (cloud 's (api "getKey")) =>
+	user X transfer (cloud , B) !=>
+	cloud transfer (user X , "secretOfDevice"++ B)).
+----------------------------------------------------------------
+userA says action (deviceB 's button) at (time 10)
+userA transfer (cloud , "secretOfDeviceB") at (time 15)
+userA says (userC controls action (deviceB 's remote)) at (time 20)
+userA says remove(userC controls action (deviceB 's remote)) at (time 30)
+================================================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (cloud , "secretOfDeviceB") at (time 15)
+userA says (userC controls action (deviceB 's remote)) at (time 20)
+userA says remove(userC controls action (deviceB 's remote)) at (time 30)
+
+attack1:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (cloud , "secretOfDeviceB") at (time 15)
+userA says (userC controls action (deviceB 's remote)) at (time 20)
+userC says action (cloud 's (api "getKey")) at (time 25)
+userC transfer (cloud , "B") at (time 25)
+userA says remove(userC controls action (deviceB 's remote)) at (time 30)
+userC transfer (cloud , "secretOfDeviceB") at (time 35)

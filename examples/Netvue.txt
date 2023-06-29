@@ -1,0 +1,21 @@
+$ encode : string -> string -> string.
+
+cloud controls (bind (user X) (device B) S).
+device B says (user X says action (device B 's button) =>
+	device B transfer (user X , encode S  B)).
+cloud says (user X transfer (cloud , encode S B) =>
+	remove (bind ANYU (device B) ANYS) and
+	bind (user X) (device B) S).
+----------------------------------------------------------------
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , encode "randomstr1" "B") at (time 35)
+================================================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "randomstr1B") at (time 35)
+attack1:
+userC says action (deviceB 's button) at (time 25)
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "randomstr1") at (time 35)
+userC transfer (cloud , "randomstr2B") at (time 40)

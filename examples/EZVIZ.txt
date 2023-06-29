@@ -1,0 +1,24 @@
+$ flagDeviceOnline : prin -> form.
+cloud controls (bind (user X) (device B) S).
+device B controls (flagDeviceOnline (device B)).
+
+cloud says (flagDeviceOnline (device B) =>!
+	user X transfer (cloud , "secretOfDevice"++ B) =>
+	notexist (bind ANYU (device B) ANYS) !=>
+	bind (user X) (device B) ("secretOfDevice"++ B)).
+device B says (user X says action (device B 's button) =>
+	flagDeviceOnline (device B) and
+	device B transfer (user X , "secretOfDevice"++ B)).
+----------------------------------------------------------------
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "secretOfDeviceB") at (time 40)
+================================================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 30)
+userA transfer (cloud , "secretOfDeviceB") at (time 40)
+attack1:
+userC says action (deviceB 's button) at (time 25)
+userA says action (deviceB 's button) at (time 30)
+userC transfer (cloud , "secretOfDeviceB") at (time 35)
+userA transfer (cloud , "secretOfDeviceB") at (time 40)

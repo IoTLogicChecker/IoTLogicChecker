@@ -1,0 +1,27 @@
+cloud controls (bind (user Y) (device X) S).
+device X says (user Y says action (device X 's button) => 
+	user Y transfer (device X , S) !=>
+	device X transfer (cloud , X , S)).
+
+cloud says (Z transfer (cloud , X , ("userIdOf"++ Y)) => 
+	remove (bind ANYU (device X) ANYS) and
+	bind (user Y) (device X) ("userIdOf"++ Y)).
+---------------------------------
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "userIdOfA") at (time 15)
+=================================
+COMMENT
+normal user op seq:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "userIdOfA") at (time 15)
+
+attack1:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "userIdOfA") at (time 15)
+userC says action (deviceD 's button) at (time 20)
+userC transfer (deviceD , "userIdOfA") at (time 25)
+
+attack2:
+userA says action (deviceB 's button) at (time 10)
+userA transfer (deviceB , "userIdOfA") at (time 15)
+userC transfer (cloud , "B" , "userIdOfC") at (time 20)
