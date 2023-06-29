@@ -3,6 +3,7 @@
 *bak2
 test*
 case/
+backup/
 __pycache__/
 evaluation/
 node_modules/
