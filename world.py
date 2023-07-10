@@ -5,9 +5,11 @@ from assumptionManager import FormSpace
 from userActionEnumerator import DecisionState
 from logicDeductor import sendNewDeclares,deriveSingleForm,deriveSingleFormsEternal,deriveFormPairs
 
+def stripTime(op):
+    return int(''.join(op.split('at')[:-1]).strip())
 class World:
     def __init__(s,twelf):
-        s.time = 0
+        s._time = 5
         s.seqGen = Sequence('randomstr')
         s.FS = FormSpace(twelf)
         s.DS = DecisionState()
@@ -30,22 +32,38 @@ class World:
                 setattr(result, k, v)
         return result
 
-    def timePass(s):
-        s.time += 5
+    def time(s):
+        return s._time
+
+    def timePass(s,t=None):
+        if not t:
+            s._time += 5
+        elif t <= s._time:
+            #print(f'{t} not bigger than {s._time}, OMMIT')
+            return #time not add, pass
+        else:
+            #print(f'time add at {t}')
+            s._time = t
         for tid in s.FS.avail_tids():
             decl = s.FS.D[tid]
             if decl.checkOperation():
                 s.FS.turnOff(decl)
-        #print(f'----------time:{s.time}----------')
+                print(f'time pass turn off {decl}')
+        #print(f'----------time:{s._time}----------')
 
     def init(s):
         sendNewDeclares(s)
         deriveSingleFormsEternal(s)
 
-    def step(s,op):
+    def step(s,op,giveTime):
         newworld = deepcopy(s)
         newworld.level += 1
-        newworld.timePass()
+        if giveTime:
+            t = findTimes(op)
+            print(t)
+            newworld.timePass(t)
+        else:
+            newworld.timePass()
         tid = newworld.FS.add(op,operationp=True)
         newworld.DS.trace(op)
         s.twelf.decl(newworld.FS.useDecl(tid))

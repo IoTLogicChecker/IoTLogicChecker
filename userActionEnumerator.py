@@ -276,7 +276,7 @@ class UserActionEnumerator():
     def feedAsPolicy(s):
         if len(s.UserOpSeq)>0:
             op = s.UserOpSeq.pop()
-            s.checkTimes(op)
+            #s.checkTimes(op)
             return op
         else:
             return None
@@ -289,15 +289,10 @@ class UserActionEnumerator():
             return None
     def findNextUserOpTimes(s)->'int or None':
         for op in s.UserOpSeq[::-1]:
-            if t := s.findTimes(op):
+            if t := findTimes(op):
                 return t
-    def findTimes(s,op)->int:
-        regexp = r'at\s+\(+\s*time\s*(\d+)\)+\s*[.]{0,1}\s*$'
-        r = re.findall(regexp,op)
-        if len(r)>0:
-            return int(r[0])
     def checkTimes(s,op):
-        if t:=s.findTimes(op):
+        if t:=findTimes(op):
             s.world.time = int(t)
             return t
     def setWorld(s,w):
@@ -306,8 +301,6 @@ class UserActionEnumerator():
         if not t:
             t = s.world.time
         return f'{op} at (time {t})'
-    def stripTime(s,op):
-        return ''.join(op.split('at')[:-1]).strip()
     def ifLocalAction(s,a):
         return 'button' in a
     def genOperationR(s,px=None,py=None):

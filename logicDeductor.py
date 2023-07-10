@@ -42,16 +42,29 @@ def derive(w,forms:"p1 ^ p2"):
         ans = []
         if len(forms2) > 0 :
             for form2 in forms2:
-                #print('2',form2)
-                #if form3 := list1orEmptyList(declThenDerive(w,'tmp',f'derive tmp ANS true .',form2)):
                 if form3 := list1orEmptyList(w.twelf.query(f'derive ({form2}) ANS true .',easy_cb)):
-                    #print('3',form3)
-                    ans.append(form3)
+                    if form3 != form2:
+                        ans.append(form3)
                 ans.append(form2)
             return ans
         else:
             return [form1]
-    return []
+    else:
+        #pass
+        forms2 = deriveMultiple(w,forms)#if forms is just a single form
+        ans = []
+        if len(forms2) > 0 :
+            for form2 in forms2:
+                if form2 in w.FS.D.keys() or form2 == 'tmp':
+                    continue
+                if form3 := list1orEmptyList(w.twelf.query(f'derive ({form2}) ANS true .',easy_cb)):
+                    if form3 != form2:
+                        ans.append(form3)
+                ans.append(form2)
+            return ans
+        else:
+            return []
+    #return []
 
 def deriveMultiple(w,form1):
     #derive to multiple solution with twelf deriveMultiple
@@ -133,10 +146,7 @@ def instantiateMacro(w,form):
     else:
         return form
 
-def deriveSingleForm(w,tid):
-    #print('Derive:',tid)
-    w.DS.checkKnows(w.FS.D[tid])
-    newforms = derive(w,tid)
+def deriveSingleWhenGetNewForms(w,tid,newforms):
     for newform in newforms:
         if Declaration.checkFormOperation(w.twelf,newform):
             newform = instantiateMacro(w,newform)
@@ -147,14 +157,17 @@ def deriveSingleForm(w,tid):
         ifResetImmediatelyUse(w,newtid)
         timeMetaRule1(w,newform,[newtid])
 
+def deriveSingleForm(w,tid):
+    print('Derive:',tid)
+    w.DS.checkKnows(w.FS.D[tid])
+    newforms = derive(w,tid)
+    deriveSingleWhenGetNewForms(w, tid, newforms) 
+
 def deriveSingleFormsEternal(w):
     for tid in w.FS.newTids():
         if w.FS.D[tid].eternal:
             deriveSingleForm(w,tid)
 
-def deriveSingleForms(w):
-    for tid in w.FS.newTids():
-        deriveSingleForm(tid)
 
 def deriveFormPairs(w):
     for tid_pa,tid_pb in w.FS.newCombination():
@@ -162,7 +175,7 @@ def deriveFormPairs(w):
         w.DS.checkKnows(w.FS.D[tid_pb])
         tid_use_lst = []
         for tid in [tid_pa,tid_pb]:
-            if f := w.FS.checkInTime(w.FS.D[tid],w.time):
+            if f := w.FS.checkInTime(w.FS.D[tid],w.time()):
                 if f == w.FS.D[tid].form:
                     tid_use_lst.append(tid)
                 else:
@@ -181,6 +194,16 @@ def deriveFormPairs(w):
             for tid in [tid_pa,tid_pb]:
                 if w.FS.D[tid].checkBangArrow():
                     w.FS.turnOff(w.FS.D[tid])
+
+            if f := Declaration.checkIfIntCompare(w.twelf,newform):
+                if type(f) == str:
+                    newform = f
+                elif f == True:
+                    pass
+                else:
+                    print(f'{tid} condition failed, continue')
+                    continue
+
             newtid = w.FS.add(newform,[tid_pa,tid_pb])
             w.twelf.decl(w.FS.useDecl(newtid))
             
@@ -212,7 +235,6 @@ def sendNewDeclares(w):
     for decl in w.FS.newDeclares():
         w.twelf.decl(decl)
     return True
-
 
 def checkViolations(w):
     def tcheckViolations(forms:"p1 ^ p2 ^ ..."):

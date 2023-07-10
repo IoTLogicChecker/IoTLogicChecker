@@ -30,9 +30,10 @@ time : integer -> data.
 at : form -> data -> form. %infix none 8 at.
 bind : prin -> prin -> string -> form.
 %%%%% state interrupt %%%%%
-reset:form -> form. %%higher order operation reset(F) , turn off F in state manager .
-remove:form -> form. %%higher order operation reset(F) , turn off F in state manager .
+reset:form -> form. %%turn off F in state manager .
+remove:form -> form. %%remove off F in state manager .
 notexist : form -> form. %% higher order predicate: notexist(F) => C call state manager to find F, is F has,devive to conclusion C.
+lessthan : integer -> integer -> form.%infix none 17 lessthan.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% precedence <<<<  ^ => and until ! at transfer , controls says 's <<<<
 
@@ -78,10 +79,14 @@ derive-pand : derive (A ^ B)     F' true
 derive-stop : derive F F B.
 
 deriveMultiple : form -> form -> type.
-deriveMultiple-and : deriveMultiple (X says (A and B)) F'
+deriveMultiple-say-and : deriveMultiple (X says (A and B)) F'
                   <- deriveMultiple (X says A) F'.
-deriveMultiple-and' : deriveMultiple (X says (A and B)) F'
+deriveMultiple-say-and' : deriveMultiple (X says (A and B)) F'
                    <- deriveMultiple (X says B) F'.
+%%deriveMultiple-and : deriveMultiple (A and B) F'
+%%                        <- deriveMultiple (A) F'.
+%%deriveMultiple-and' : deriveMultiple (A and B) F'
+%%                   <- deriveMultiple (B) F'.
 deriveMultiple-stop : deriveMultiple F F.
 
 %%%%%%%%  app-specific :RTE %%%%%%%%%%%%%%%
@@ -93,6 +98,7 @@ RANDOMS : string.
 %% resource or attribute
 button : attribute.
 api : string -> attribute.
+int : integer -> string.
 local : attribute.
 remote : attribute.
 network : attribute.

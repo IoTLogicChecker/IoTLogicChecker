@@ -1,5 +1,6 @@
 #!/bin/python3
 import errno
+import re
 import os
 import signal
 import functools
@@ -102,6 +103,15 @@ def removeStr(f):
         else:
             escape = False
     return rst
+
+def findTimes(op)->int:
+    #regexp1 = r'at\s+\(+\s*time\s*(\d+)\)+\s*[.]{0,1}\s*$'#backup generateRandomUserAction need
+    regexp1 = r'at\s+\(+\s*time\s*(\d+)\)\s*$'
+    regexp2 = r'at\s+time\s+(\d+)\s*$'
+    for regexp in [regexp1,regexp2]:
+        r = re.findall(regexp,op)
+        if len(r)>0:
+            return int(r[0])
 
 mk_tid = lambda i: f"p{i}"
 mk_tdecl = lambda tid,ln: f"{tid} = {ln}."

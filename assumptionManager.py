@@ -75,27 +75,6 @@ class Declaration:
         ##if operation "X transfer Y" "X says action Y",
         ##turnOff when used
         return Declaration.checkFormOperation(s.twelf,s.form)
-        #patterns = ["MX transfer MY",
-        #            "MX transfer MY at MT"]
-        #patterns = wrapParen(patterns)
-        #p_transfer = len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).'))>0
-        ##print('p_transfer',p_transfer)
-
-        ##excpet => =>! !=>, all are operation
-        #patterns = ["MX says (MF1 => MF2)",
-        #            "MX says (MF1 !=> MF2)",
-        #            "MX says (MF1 =>! MF2)"
-        #            ]
-        #patterns = wrapParen(patterns)
-        #p_not_rules = len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).')) == 0
-        ##print('p_not_rules',p_not_rules)
-        #
-        #patterns = ["MX says MF",
-        #            "MX says MF at MT"]
-        #patterns = wrapParen(patterns)
-        #p_says =  len(s.twelf.query(f'{s.tid} in ({" ^ ".join(patterns)}).')) > 0
-        ##print('p_says',p_says)
-        #return (p_says and p_not_rules) or p_transfer
     def checkTransfer(s)->'prin,s or None':
         patterns = ["X transfer (Y , ANS)"]
         patterns = wrapParen(patterns)
@@ -109,6 +88,24 @@ class Declaration:
         return len(s.twelf.query(f'eq {s.tid} (user X controls (action ({prin}))).'))>0
     def match(s,f):
         return len(s.twelf.query(f'eq {s.tid} ({f}).'))>0
+    @staticmethod
+    def checkIfIntCompare(twelf,form)->'bool or form':
+        #call twelf to solve the time constraint for use
+        patterns = ["(MX says (MT lessthan MT2 => ANS))",
+                    "(MX says (MT lessthan MT2 =>! ANS))",
+                    "(MX says (MT lessthan MT2 !=> ANS))"]
+        l = twelf.query(f"({form}) in ({' ^ '.join(patterns)}).",lambda f:[f.split(';\n')][0])
+        if len(l)>0:
+            F = l[0]
+            T2 = int(l[1].lstrip('MT2 = ').strip())
+            T = int(l[2].lstrip('MT = ').strip())
+            X = l[3].lstrip('MX = ').strip()
+            if T < T2:
+                return f'{X} says ({F})'
+            else:
+                return False
+        else:
+            return True 
     @staticmethod
     def checkRedundantAnd(twelf,form):
         return len(twelf.query(f'eq ({form}) (MX says (MF1 and MF2)).'))>0
@@ -213,9 +210,7 @@ class FormSpace:
                 return ans
         else:
             return decl.form
-    def checkAllInTime(s,time_):
-        for decl in s.D.values():
-            s.checkInTime(decl,time_)
+       
     def newCombination(s):
         ans = []
         for p_tid in combinations(s.avail_tids(),2):

@@ -27,8 +27,8 @@ def run(twelf, mode=3):
     try:
         while True:
             if op := AE.gen():
-                print(op)
-                w = w.step(op)
+                #print(op)
+                w = w.step(op,True)
                 AE.setWorld(w)
             else:
                 break
